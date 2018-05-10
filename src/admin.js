@@ -1,24 +1,18 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
 
-function Admin (props) {
-  return (
-    <div>
-      <button>ADD</button>
-      <button>DELETE</button>
-    </div>
-  );
-}
+import {bindThis} from './method'
 
-class AddTag extends React.Component {
+// 为note添加一个tag
+export class AddTag extends React.Component {
   constructor(props) {
     super(props)
-    this.addtag = this.addtag.bind(this)
     this.tag = React.createRef()
+    bindThis.call(this, [this.addtag])
   }
   addtag(e) {
     this.props.addTag(this.tag.current.value)
-    // this.tag.current.value = ''
+    this.tag.current.value = ''
     e.preventDefault()
   }
   render() {
@@ -31,19 +25,16 @@ class AddTag extends React.Component {
   }
 }
 
-class AddNote extends React.Component {
+// 添加一个note
+export class AddNote extends React.Component {
   constructor(props) {
     super(props)
     this.tag = []
     this.content = React.createRef()
-
-    this.add = this.add.bind(this)
-    this.addTag = this.addTag.bind(this)
+    bindThis.call(this, [this.add, this.addTag])
   }
   addTag(tag) {
     this.tag.push(tag)
-    console.log('addTag: ' + tag)
-    console.log(this.tag)
   }
   add() {
     let note = {
@@ -51,32 +42,36 @@ class AddNote extends React.Component {
       content: this.content.current.value,
       // tags: this.tag
       // 这样做会造成所有新加的note的tag都引用同一个值，如果删掉“this.tag=[]" 引用对象赋值要慎重
-      tags: this.tag.slice()
+      tags: this.tag.slice(),
+      id: this.props.note.id
     }
     this.props.addNote(note)
     this.tag = []
   }
   render() {
-    return (
-      <div>
+    // css
+    let addNoteStyle = {
+      zIndex: 1000,
+      border: "solid",
+      borderWidth: 2
+    }
+
+    let content = (this.props.note) ? this.props.note.content : null
+    this.tag = this.props.note ? this.props.note.tags.slice() : []
+    return this.props.show && (
+      <div className="AddNote">
         <h2>ADD NOTE</h2>
         <textarea
+          defaultValue={content}
           ref={this.content}
           name="content"
-          rows="7"
-          cols="20" />
-        <div>
+          rows="7" cols="40" />
+        <div onClick={() => {this.props.changeModel(1)}}>
           <button onClick={this.add}>save</button>
           <button>cancel</button>
         </div>
         <AddTag addTag={this.addTag} />
       </div>
-    );
+    )
   }
-}
-
-export default {
-  AddTag: AddTag,
-  Admin: Admin,
-  AddNote: AddNote,
 }

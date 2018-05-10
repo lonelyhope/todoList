@@ -1,0 +1,86 @@
+body {
+    /* width: 800px; */
+    text-align: center;
+}
+/* 实现全局遮罩 */
+.shader {
+    width: 100%;
+    height: 100%;
+    position: fixed;
+    background-color: gray;
+    opacity: 0.3;
+    z-index: 100;
+    top: 0;
+    right: 0;
+}
+button {
+    height: 30px;
+    border-radius: 5px;
+    border: solid greenyellow 1px;
+    background-color: greenyellow;
+    color: white;
+    margin: 1px;
+}
+
+/*  */
+.Notes {
+    background-color: aqua;
+    text-align: center;
+    position: relative;
+    width: 80%;
+    margin: auto;
+}
+.Notes h2 {
+    color: white;
+}
+.DeleteBtn {
+    float: right;
+    position: absolute;
+    right: 5px;
+    top: 5px;
+}
+
+/*  */
+.AddNote h2 {
+    color: white;
+}
+.AddNote input {
+    width: 80%;
+}
+.AddNote {
+    text-align: center;
+    z-index: 1000;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    border: solid 2px lightskyblue;
+    background-color: lightskyblue;
+    width: 50%;
+    min-width: 20px;
+    padding: 4px;
+}
+
+/*  */
+.Tags ul, .Note ul {
+    color: white;
+    padding-left: 0;
+    list-style: none;
+    display: flex;
+    width: 80%;
+    margin: auto;
+    padding: auto;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+.Tags ul li, .Note ul li {
+    border: solid lightskyblue;
+    border-radius: 4px;
+    background-color: lightskyblue;
+    margin: 3px;
+    padding: 0px 2px;
+}
+.Tags ul .selectedTag {
+    background-color: #f0f;
+    border-color: #f0f;
+}

@@ -1,235 +1,97 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
-// import admin from './admin.js'
+import PropTypes from 'prop-types'
 
-// let AddTag =  admin.AddTag
-// let Admin = admin.Admin
-// let AddNote = admin.addNote
+import {AddTag, AddNote} from './admin.js'
+import {bindThis, findId} from './method'
+import {DeleteBtn, Tags, Note, Notes} from './shownote'
 
 function Title(props) {
   return (<h1>todo lists</h1>);
 }
 
-// ----------- admin -----------------------------------
-class Admin extends React.Component {
-  constructor(props) {
-    super(props)
-    this.changeModel = this.changeModel.bind(this)
-  }
-  changeModel(model) {
-    this.props.chengeModel(model)
-  }
-  render() {
-    let deleteModel = this.props.deleteModel
-    let deleteModelHtml = (
-      <span onClick={() => {this.changeModel(false)}}>
-        <button>save</button>
-        <button>cancel</button>
-      </span>
-    )
-    let showModelHtml = <button onClick={() => {this.changeModel(true)}}>DELETE</button>
-    return (
-      <div>
-        <button onClick={() => {this.changeModel(true)}}>ADD</button>
-        {deleteModel ? deleteModelHtml : showModelHtml}
-      </div>
-    );
-  }
-}
-
-class AddTag extends React.Component {
-  constructor(props) {
-    super(props)
-    this.addtag = this.addtag.bind(this)
-    this.tag = React.createRef()
-  }
-  addtag(e) {
-    this.props.addTag(this.tag.current.value)
-    // this.tag.current.value = ''
-    e.preventDefault()
-  }
-  render() {
-    return (
-      <div>
-        <input type="text" ref={this.tag} />
-        <button onClick={this.addtag}>add tag</button>
-      </div>
-    );
-  }
-}
-
-class AddNote extends React.Component {
-  constructor(props) {
-    super(props)
-    this.tag = []
-    this.content = React.createRef()
-
-    this.add = this.add.bind(this)
-    this.addTag = this.addTag.bind(this)
-  }
-  addTag(tag) {
-    this.tag.push(tag)
-    console.log('addTag: ' + tag)
-    console.log(this.tag)
-  }
-  add() {
-    let note = {
-      date: (new Date()),
-      content: this.content.current.value,
-      // tags: this.tag
-      // 这样做会造成所有新加的note的tag都引用同一个值，如果删掉“this.tag=[]" 引用对象赋值要慎重
-      tags: this.tag.slice()
-    }
-    this.props.addNote(note)
-    this.tag = []
-  }
-  render() {
-    return (
-      <div>
-        <h2>ADD NOTE</h2>
-        <textarea
-          ref={this.content}
-          name="content"
-          rows="7"
-          cols="20" />
-        <div>
-          <button onClick={this.add}>save</button>
-          <button>cancel</button>
-        </div>
-        <AddTag addTag={this.addTag} />
-      </div>
-    );
-  }
-}
-
-// ----------------- show ---------------------------------------
-
-
-class Tags extends React.Component {
-  constructor(props) {
-    super(props);
-    this.handleTagClick = this.handleTagClick.bind(this)
-  }
-  handleTagClick(e) {
-    console.log('click tag: ' + e.target.innerHTML)
-    this.props.selectTag(e.target.innerHTML)
-  }
-  render() {
-    return (
-      <div>
-        <h2>tags</h2>
-        <ul>
-          {
-            this.props.tags.map((tag, index) => 
-              <li
-                key={index}
-                onClick={this.handleTagClick} >
-                {tag}
-              </li>
-            )
-          }
-        </ul>
-      </div>
-    );
-  }
-}
-
-
-
-class Note extends React.Component {
-  constructor(props) {
-    super(props);
-  }
-  render() {
-    let noteContent = this.props.noteContent
-    return (
-      <div>
-      {
-        noteContent.date + ': ' + noteContent.content + ' ' + (Array.isArray(noteContent.tags) ? noteContent.tags.join(',') : 'no tag')
-      }
-      </div>
-    );
-  }
-}
-
-class Notes extends React.Component {
-  constructor(props) {
-    super(props)
-  }
-  render() {
-    return (
-      <div>
-        <h2>Notes</h2>
-        {
-          Array.isArray(this.props.notes) ? (
-            <div>
-              {
-                this.props.notes.map((note, index) => {
-                  return (
-                    <div key={index}>
-                      {this.props.deleteModel && <input type="checkbox" />}
-                      <Note noteContent={note} />
-                    </div>
-                  )
-                })
-              }
-            </div>
-          ) : 'no notes now'
-        }
-      </div>
-    );
-  }
-}
-
 class Notebook extends React.Component {
   constructor(props) {
     super(props)
+    this.id = 0
+    this.editIndex = null
     this.state = {
-      noteLists: [
-        {
-          date: 'today',
-          content: 'abc',
-          tags: ['a', 'b'],
-        }
-      ],
-      tags: [1, 'a', 'haha'],
+      noteLists: [],
+      tags: [],
       // 被选中的tag的下标
       selectedTags: [],
-      deleteModel: false,
+      // model 控制显示模式，model == 1:show note, model == 2:delete note, model == 3:add note
+      model: 1,
     }
-    this.addNote = this.addNote.bind(this)
-    this.addGlobalTag = this.addGlobalTag.bind(this)
-    this.selectTag = this.selectTag.bind(this)
-    this.filterNotes = this.filterNotes.bind(this)
-    this.changeModel = this.changeModel.bind(this)
+    bindThis.call(this, [this.addNote, this.addGlobalTag, this.selectTag, this.filterNotes, this.changeModel, this.edit])
+    bindThis.call(this, [this.deleteNotes])
   }
   render() {
-    console.log('render')
-    console.log(this.state.noteLists)
-    console.log(this.state.selectedTags)
     return (
       <div>
         <Title />
         <div>
-          {/* 不是创建新实例，而是沿用原来的实例？ */}
-          <Admin
-            addNote={this.addNote}
-            chengeModel={this.changeModel} />
-          <Tags tags={this.state.tags} selectTag={this.selectTag}/>
-          <Notes notes={this.filterNotes()} deleteModel={this.deleteModel} />
+          <button onClick={() => {this.changeModel(3)}}>ADD</button>
         </div>
         <div>
-          <AddNote addNote={this.addNote} />
+          {/* 不是创建新实例，而是沿用原来的实例？ */}
+          <Tags 
+            tags={this.state.tags}
+            selectTag={this.selectTag} 
+            selectedTags={this.state.selectedTags}/>
+          <Notes
+            edit={this.edit}
+            notes={this.filterNotes()}
+            model={this.state.model}
+            changeModel={this.changeModel}
+            deleteNotes={this.deleteNotes} />
         </div>
+        <div>
+          <AddNote
+          note={this.editIndex != null && this.state.noteLists[this.editIndex]}
+          addNote={this.addNote}
+          changeModel={this.changeModel}
+          show={this.state.model == 3}/>
+        </div>
+        <div className={this.state.model == 3 ? "shader" : ""}></div>
       </div>
     );
   }
-  changeModel(model) {
+  // notes 发出修改请求，计算需要被修改的note的下标，进入修改模式
+  edit(id) {
+    let noteLists = this.state.noteLists
+    for (let i = 0; i < noteLists.length; i++) {
+      if (noteLists[i].id == id) {
+        this.editIndex = i
+        break
+      }
+    }
     this.setState({
-      deleteModel: model
+      model: 3
     })
   }
-  // 添加新的tag
+  // 删除notes，传入参数为待删除note的id组成的数组
+  deleteNotes(lists) {
+    let noteLists = this.state.noteLists
+    lists.forEach(list_id => {
+      console.log(list_id)
+      for(let i = 0; i < noteLists.length; i++) {
+        if (list_id == noteLists[i].id) {
+          noteLists.splice(i, 1)
+          break
+        }
+      }
+    })
+    this.setState({
+      noteLists: noteLists
+    })
+  }
+  changeModel(model) {
+    this.setState({
+      model: model
+    })
+  }
+  // 遍历新添加的note中是否有新的tag，添加新的tag
   addGlobalTag(noteTags) {
     console.log('noteTags')
     console.log(noteTags)
@@ -246,12 +108,19 @@ class Notebook extends React.Component {
   addNote(note) {
     console.log('addnote:')
     console.log(note)
-    let noteLists = this.state.noteLists
-    noteLists.push(note)
+    let noteLists = this.state.noteLists.slice()
+    if (this.editIndex != null) {
+      noteLists[this.editIndex] = note
+    } else {
+      this.id++
+      note.id = this.id
+      noteLists.push(note)
+    }
     this.setState({
       noteLists: noteLists
     })
     this.addGlobalTag(note.tags)
+    this.editIndex = null
   }
   selectTag(selectTag) {
     let selectedTags = this.state.selectedTags.slice()
@@ -281,7 +150,7 @@ class Notebook extends React.Component {
 }
 
 
-
+// ----------------------------------
 ReactDOM.render(
   <Notebook />,
   document.getElementById('app')
